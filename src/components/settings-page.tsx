@@ -94,7 +94,8 @@ const SettingsPage: React.FC = () => {
         <div>
           <h2 className="text-xl font-medium mb-2">Data Management</h2>
           <p className="text-sm text-gray-600 mb-3">
-            Backup your invoice data to a file or restore it from a previous backup.
+            Backup your invoice data to a local file or restore it from a previously saved backup.
+            For added security, we recommend uploading your downloaded backup file to your personal cloud storage (e.g., Google Drive, Dropbox, OneDrive).
           </p>
           <div className="flex space-x-3">
             <button
@@ -118,6 +119,20 @@ const SettingsPage: React.FC = () => {
               id="restore-file-input"
             />
           </div>
+        </div>
+
+        <div className="mt-8 pt-6 border-t border-gray-200">
+          <h2 className="text-xl font-medium mb-2">Browser Sync & Data Accessibility</h2>
+          <p className="text-sm text-gray-600 mb-2">
+            Modern web browsers (like Chrome, Edge, Firefox) may offer features to synchronize your application data
+            if you are logged into your browser profile (e.g., with a Google or Microsoft account) and have data sync enabled.
+            This could potentially make your invoice data accessible on other devices where you use the same browser and profile.
+          </p>
+          <p className="text-sm text-gray-600 font-medium">
+            <strong>Important:</strong> While browser sync can be convenient, it is a feature controlled by your browser settings
+            and not directly by this application. For guaranteed backup, data transfer between different computers or browsers,
+            or recovery after clearing browser data, please use the "Backup Data" and "Restore Data" features provided above.
+          </p>
         </div>
         {/* Future settings can be added here */}
       </div>
