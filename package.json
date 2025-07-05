@@ -3,7 +3,6 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "homepage": "https://ezesundayeze.github.io/invoice/",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noCheck && vite build",
