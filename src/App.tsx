@@ -4,6 +4,7 @@ import { CreateInvoice } from "./components/create-invoice";
 import { InvoiceList } from "./components/invoice-list";
 import { InvoiceProvider } from "./context/invoice-context";
 import { Dashboard } from "./components/dashboard";
+import SettingsPage from "./components/settings-page"; // Import the SettingsPage component
 
 export default function App() {
   return (
@@ -30,6 +31,11 @@ export default function App() {
               <Tab key="list" title="Manage Invoices">
                 <div className="p-4 md:p-6">
                   <InvoiceList />
+                </div>
+              </Tab>
+              <Tab key="settings" title="Settings">
+                <div className="p-4 md:p-6">
+                  <SettingsPage />
                 </div>
               </Tab>
             </Tabs>
