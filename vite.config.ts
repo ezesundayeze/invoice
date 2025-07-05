@@ -19,8 +19,8 @@ export default defineConfig({
         theme_color: "#ffffff", // Example theme color, can be adjusted
         background_color: "#ffffff", // Example background color
         display: "standalone",
-        scope: "/",
-        start_url: "/",
+        scope: "/invoice/", // Updated to match base path
+        start_url: "/invoice/", // Updated to match base path
         icons: [
           {
             src: "vite.svg", // Using existing vite.svg as a placeholder
