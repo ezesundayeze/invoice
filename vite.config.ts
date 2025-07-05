@@ -5,6 +5,7 @@ import vitePluginInjectDataLocator from "./plugins/vite-plugin-inject-data-locat
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: "https://github.com/ezesundayeze/invoice",
   plugins: [
     react(),
     vitePluginInjectDataLocator(),
