@@ -5,7 +5,7 @@ import vitePluginInjectDataLocator from "./plugins/vite-plugin-inject-data-locat
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: process.env.NODE_ENV === 'production' ? '/invoice/' : '/',
+  base: '/invoice/',
   plugins: [
     react(),
     vitePluginInjectDataLocator(),
