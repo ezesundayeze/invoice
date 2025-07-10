@@ -31,7 +31,7 @@ const emptyItem = (): InvoiceItem => ({
 const initialFormState: InvoiceFormData = {
   invoiceNumber: `INV-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`,
   date: format(new Date(), 'yyyy-MM-dd'),
-  dueDate: format(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'),
+  // dueDate is now optional
   from: {
     name: "",
     email: "",
@@ -40,7 +40,7 @@ const initialFormState: InvoiceFormData = {
   },
   to: {
     name: "",
-    email: "",
+    // email is now optional
     address: "",
     phone: "",
   },
@@ -130,7 +130,7 @@ export const CreateInvoice: React.FC = () => {
         ...initialFormState,
         invoiceNumber: `INV-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`,
         date: format(new Date(), 'yyyy-MM-dd'),
-        dueDate: format(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'),
+        // No need to set dueDate here as it's optional and defaults to undefined in initialFormState
       });
     } catch (error) {
       console.error("Error creating invoice:", error);
@@ -175,9 +175,8 @@ export const CreateInvoice: React.FC = () => {
                   label="Due Date"
                   type="date"
                   name="dueDate"
-                  value={formData.dueDate}
+                  value={formData.dueDate || ""}
                   onChange={handleInputChange}
-                  isRequired
                 />
               </div>
             </CardBody>
@@ -236,9 +235,8 @@ export const CreateInvoice: React.FC = () => {
                   label="Email"
                   type="email"
                   name="email"
-                  value={formData.to.email}
+                  value={formData.to.email || ""}
                   onChange={(e) => handleInputChange(e, "to")}
-                  isRequired
                 />
                 <Textarea
                   label="Address"
