@@ -99,9 +99,11 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoiceId }) => 
             <p className="text-gray-600 text-sm">
               Date: {format(parseISO(invoice.date), 'MMMM dd, yyyy')}
             </p>
-            <p className="text-gray-600 text-sm">
-              Due Date: {format(parseISO(invoice.dueDate), 'MMMM dd, yyyy')}
-            </p>
+            {invoice.dueDate && (
+              <p className="text-gray-600 text-sm">
+                Due Date: {format(parseISO(invoice.dueDate), 'MMMM dd, yyyy')}
+              </p>
+            )}
           </div>
         </div>
 
@@ -118,7 +120,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoiceId }) => 
             <h2 className="text-gray-500 font-medium mb-2 text-sm">TO</h2>
             <p className="font-semibold">{invoice.to.name}</p>
             <p className="text-gray-600 whitespace-pre-line">{invoice.to.address}</p>
-            <p className="text-gray-600">{invoice.to.email}</p>
+            {invoice.to.email && <p className="text-gray-600">{invoice.to.email}</p>}
             {invoice.to.phone && <p className="text-gray-600">{invoice.to.phone}</p>}
           </div>
         </div>

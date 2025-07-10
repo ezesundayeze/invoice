@@ -9,7 +9,7 @@ export interface Invoice {
   id: string;
   invoiceNumber: string;
   date: string;
-  dueDate: string;
+  dueDate?: string;
   from: {
     name: string;
     email: string;
@@ -18,7 +18,7 @@ export interface Invoice {
   };
   to: {
     name: string;
-    email: string;
+    email?: string;
     address: string;
     phone?: string;
   };
@@ -33,7 +33,7 @@ export interface Invoice {
 export interface InvoiceFormData {
   invoiceNumber: string;
   date: string;
-  dueDate: string;
+  dueDate?: string;
   from: {
     name: string;
     email: string;
@@ -42,7 +42,7 @@ export interface InvoiceFormData {
   };
   to: {
     name: string;
-    email: string;
+    email?: string;
     address: string;
     phone: string;
   };
