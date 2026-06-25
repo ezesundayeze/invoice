@@ -23,7 +23,7 @@ import { useInvoice } from "../context/invoice-context";
 import { InvoiceFormData, InvoiceItem } from "../types/invoice";
 import { InvoicePreview } from "./invoice-preview";
 import { CURRENCIES, DEFAULT_CURRENCY, formatCurrency, getCurrencySymbol } from "../utils/currency";
-import { getProfile, saveProfile } from "../utils/profile";
+import { getBranding, getProfile, saveProfile } from "../utils/profile";
 
 const emptyItem = (): InvoiceItem => ({
   id: uuidv4(),
@@ -47,6 +47,7 @@ const makeInitialFormState = (): InvoiceFormData => ({
   },
   items: [emptyItem()],
   currency: DEFAULT_CURRENCY,
+  branding: getBranding(),
   notes: "",
   terms: "Payment is due within 30 days",
 });

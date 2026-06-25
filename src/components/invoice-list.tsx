@@ -29,6 +29,7 @@ import { useInvoice } from "../context/invoice-context";
 import { Invoice, InvoiceFormData } from "../types/invoice";
 import { InvoicePreview } from "./invoice-preview";
 import { DEFAULT_CURRENCY, formatCurrency } from "../utils/currency";
+import { getBranding } from "../utils/profile";
 
 const statusColorMap = {
   draft: "default",
@@ -86,6 +87,7 @@ export const InvoiceList: React.FC = () => {
       },
       items: invoice.items.map((item) => ({ ...item, id: uuidv4() })),
       currency: invoice.currency ?? DEFAULT_CURRENCY,
+      branding: invoice.branding ?? getBranding(),
       notes: invoice.notes ?? "",
       terms: invoice.terms ?? "",
     };

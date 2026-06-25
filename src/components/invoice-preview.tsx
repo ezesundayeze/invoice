@@ -6,6 +6,7 @@ import { useInvoice } from "../context/invoice-context";
 import { Invoice } from "../types/invoice";
 import { exportToPdf } from "../utils/export-utils";
 import { formatCurrency } from "../utils/currency";
+import { DEFAULT_ACCENT_COLOR, getBranding } from "../utils/profile";
 
 interface InvoicePreviewProps {
   invoiceId: string;
@@ -60,6 +61,9 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoiceId }) => 
     return <div className="text-center py-8">Invoice not found</div>;
   }
 
+  const branding = invoice.branding ?? getBranding();
+  const accent = branding.accentColor || DEFAULT_ACCENT_COLOR;
+
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
@@ -76,7 +80,14 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoiceId }) => 
       <div ref={invoiceRef} className="bg-white p-6 rounded-lg">
         <div className="flex justify-between items-start mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">INVOICE</h1>
+            {branding.logo && (
+              <img
+                src={branding.logo}
+                alt="Business logo"
+                className="h-16 mb-3 object-contain"
+              />
+            )}
+            <h1 className="text-2xl font-bold" style={{ color: accent }}>INVOICE</h1>
           </div>
           <div className="text-right">
             <p className="text-xl font-semibold text-gray-800">{invoice.invoiceNumber}</p>
@@ -112,7 +123,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoiceId }) => 
         <div className="mb-8">
           <table className="w-full text-left">
             <thead>
-              <tr className="border-b border-gray-200">
+              <tr className="border-b-2" style={{ borderColor: accent }}>
                 <th className="py-3 px-2 text-gray-500 font-medium text-sm">DESCRIPTION</th>
                 <th className="py-3 px-2 text-gray-500 font-medium text-sm text-right">QTY</th>
                 <th className="py-3 px-2 text-gray-500 font-medium text-sm text-right">PRICE</th>
@@ -143,7 +154,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoiceId }) => 
             <Divider className="my-2" />
             <div className="flex justify-between py-2">
               <span className="font-semibold">Total</span>
-              <span className="font-bold">{formatCurrency(calculateSubtotal(), invoice.currency)}</span>
+              <span className="font-bold" style={{ color: accent }}>{formatCurrency(calculateSubtotal(), invoice.currency)}</span>
             </div>
           </div>
         </div>

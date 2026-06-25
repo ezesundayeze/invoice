@@ -5,6 +5,11 @@ export interface InvoiceItem {
   price: number;
 }
 
+export interface InvoiceBranding {
+  logo?: string; // data URL of the uploaded logo image
+  accentColor?: string; // hex color used for headings/accents
+}
+
 export interface Invoice {
   id: string;
   invoiceNumber: string;
@@ -24,6 +29,7 @@ export interface Invoice {
   };
   items: InvoiceItem[];
   currency: string;
+  branding?: InvoiceBranding;
   notes?: string;
   terms?: string;
   status: 'draft' | 'sent' | 'paid' | 'overdue';
@@ -49,6 +55,7 @@ export interface InvoiceFormData {
   };
   items: InvoiceItem[];
   currency: string;
+  branding?: InvoiceBranding;
   notes: string;
   terms: string;
 }

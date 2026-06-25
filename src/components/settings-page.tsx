@@ -1,13 +1,23 @@
 import React, { useRef, useState } from 'react'; // Added useRef, useState
 import { db } from '../db/db'; // Import the Dexie db instance
 import { Invoice } from '../types/invoice'; // Import Invoice type for casting
-import { BusinessProfile, getProfile, saveProfile } from '../utils/profile';
+import {
+  BusinessProfile,
+  DEFAULT_ACCENT_COLOR,
+  getBranding,
+  getProfile,
+  saveBranding,
+  saveProfile,
+} from '../utils/profile';
+import { InvoiceBranding } from '../types/invoice';
 // We might use Button from '@heroui/react' if available and suitable
 // import { Button } from '@heroui/react';
 
 const SettingsPage: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null); // Ref for file input
+  const logoInputRef = useRef<HTMLInputElement>(null); // Ref for logo file input
   const [profile, setProfile] = useState<BusinessProfile>(() => getProfile());
+  const [branding, setBranding] = useState<InvoiceBranding>(() => getBranding());
 
   const handleProfileChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -20,6 +30,39 @@ const SettingsPage: React.FC = () => {
     e.preventDefault();
     saveProfile(profile);
     alert('Business profile saved. It will pre-fill the "Your Details" section on new invoices.');
+  };
+
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file for your logo.');
+      return;
+    }
+    // Keep logos small since they are stored (base64) in localStorage.
+    if (file.size > 500 * 1024) {
+      alert('Please choose a logo smaller than 500KB.');
+      if (logoInputRef.current) logoInputRef.current.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setBranding((prev) => ({ ...prev, logo: reader.result as string }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveLogo = () => {
+    setBranding((prev) => ({ ...prev, logo: '' }));
+    if (logoInputRef.current) logoInputRef.current.value = '';
+  };
+
+  const handleSaveBranding = (e: React.FormEvent) => {
+    e.preventDefault();
+    saveBranding(branding);
+    alert('Branding saved. New invoices will use your logo and accent color.');
   };
 
   const handleBackup = async () => {
@@ -158,6 +201,86 @@ const SettingsPage: React.FC = () => {
               className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
             >
               Save Profile
+            </button>
+          </form>
+        </div>
+
+        <div className="mt-8 pt-6 border-t border-gray-200">
+          <h2 className="text-xl font-medium mb-2">Branding</h2>
+          <p className="text-sm text-gray-600 mb-3">
+            Add your logo and an accent color. New invoices will use them on the
+            preview and exported PDF.
+          </p>
+          <form onSubmit={handleSaveBranding} className="space-y-4 max-w-lg">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Logo</label>
+              <div className="flex items-center gap-4">
+                {branding.logo ? (
+                  <img
+                    src={branding.logo}
+                    alt="Logo preview"
+                    className="h-16 w-16 object-contain border border-gray-200 rounded-md bg-white"
+                  />
+                ) : (
+                  <div className="h-16 w-16 flex items-center justify-center border border-dashed border-gray-300 rounded-md text-xs text-gray-400 text-center">
+                    No logo
+                  </div>
+                )}
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => logoInputRef.current?.click()}
+                    className="px-3 py-2 bg-gray-100 text-gray-800 rounded-md hover:bg-gray-200"
+                  >
+                    {branding.logo ? 'Change Logo' : 'Upload Logo'}
+                  </button>
+                  {branding.logo && (
+                    <button
+                      type="button"
+                      onClick={handleRemoveLogo}
+                      className="px-3 py-2 text-red-600 rounded-md hover:bg-red-50"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  ref={logoInputRef}
+                  onChange={handleLogoChange}
+                  className="hidden"
+                />
+              </div>
+              <p className="text-xs text-gray-400 mt-1">PNG, JPG or SVG. Max 500KB.</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Accent Color</label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="color"
+                  value={branding.accentColor || DEFAULT_ACCENT_COLOR}
+                  onChange={(e) =>
+                    setBranding((prev) => ({ ...prev, accentColor: e.target.value }))
+                  }
+                  className="h-10 w-14 border border-gray-300 rounded-md cursor-pointer bg-white"
+                />
+                <input
+                  type="text"
+                  value={branding.accentColor || ''}
+                  onChange={(e) =>
+                    setBranding((prev) => ({ ...prev, accentColor: e.target.value }))
+                  }
+                  placeholder={DEFAULT_ACCENT_COLOR}
+                  className="w-32 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+            >
+              Save Branding
             </button>
           </form>
         </div>
