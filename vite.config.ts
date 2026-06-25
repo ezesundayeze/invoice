@@ -11,6 +11,11 @@ export default defineConfig({
     VitePWA({
       registerType: "autoUpdate",
       includeAssets: ["vite.svg"], // Assuming vite.svg is in public folder, or adjust path
+      workbox: {
+        // The main bundle is larger than Workbox's default 2 MiB precache
+        // limit, so raise it to 5 MiB so the service worker build succeeds.
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+      },
       manifest: {
         name: "Invoice Generator",
         short_name: "InvoiceApp",
