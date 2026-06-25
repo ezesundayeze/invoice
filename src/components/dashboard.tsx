@@ -318,10 +318,8 @@ export const Dashboard: React.FC = () => {
           {recentInvoices.length > 0 ? (
             <div className="space-y-4">
               {recentInvoices.map((invoice, index) => {
-                const total = invoice.items.reduce(
-                  (sum, item) => sum + item.quantity * item.price, 0
-                );
-                
+                const total = invoiceTotalInDefault(invoice);
+
                 return (
                   <div key={invoice.id}>
                     <div className="flex justify-between items-center">
@@ -332,7 +330,7 @@ export const Dashboard: React.FC = () => {
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="font-medium">{formatCurrency(total, invoice.currency)}</p>
+                        <p className="font-medium">{formatCurrency(total, defaultCurrency)}</p>
                         <Chip
                           className="capitalize mt-1"
                           color={invoice.status as "default" | "primary" | "success" | "danger"}
