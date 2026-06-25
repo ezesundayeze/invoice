@@ -84,7 +84,14 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoiceId }) => 
               <img
                 src={branding.logo}
                 alt="Business logo"
-                className="h-16 mb-3 object-contain"
+                className="mb-3 block"
+                style={{
+                  height: "auto",
+                  width: "auto",
+                  maxHeight: "64px",
+                  maxWidth: "200px",
+                  objectFit: "contain",
+                }}
               />
             )}
             <h1 className="text-2xl font-bold" style={{ color: accent }}>INVOICE</h1>

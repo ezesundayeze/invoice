@@ -1,8 +1,25 @@
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
+// Ensure every <img> inside the element has finished loading/decoding before
+// we rasterize it, otherwise html2canvas can capture a blank or clipped logo.
+const waitForImages = async (element: HTMLElement): Promise<void> => {
+  const images = Array.from(element.querySelectorAll("img"));
+  await Promise.all(
+    images.map((img) => {
+      if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+      return new Promise<void>((resolve) => {
+        img.addEventListener("load", () => resolve(), { once: true });
+        img.addEventListener("error", () => resolve(), { once: true });
+      });
+    })
+  );
+};
+
 export const exportToPdf = async (element: HTMLElement, filename: string): Promise<void> => {
   try {
+    await waitForImages(element);
+
     const canvas = await html2canvas(element, {
       scale: 2,
       logging: false,
