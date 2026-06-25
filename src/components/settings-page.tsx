@@ -392,7 +392,7 @@ const SettingsPage: React.FC = () => {
                     <span className="text-sm text-gray-500">1 {currency.code} =</span>
                     <input
                       type="number"
-                      step="0.0001"
+                      step="any"
                       min="0"
                       value={currencySettings.rates[currency.code] ?? ''}
                       onChange={(e) => handleRateChange(currency.code, e.target.value)}
