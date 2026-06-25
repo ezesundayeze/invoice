@@ -3,7 +3,7 @@ import { format, parseISO, subMonths, isWithinInterval, startOfMonth, endOfMonth
 import { Card, CardBody, CardHeader, Spinner, Chip, Divider } from "@heroui/react";
 import { Icon } from "@iconify/react";
 import { useInvoice } from "../context/invoice-context";
-import { formatCurrency } from "../utils/currency";
+import { convertCurrency, formatCurrency, getCurrencySettings, getCurrencySymbol } from "../utils/currency";
 import { 
   BarChart, 
   Bar, 
@@ -20,7 +20,27 @@ import {
 
 export const Dashboard: React.FC = () => {
   const { invoices, isLoading } = useInvoice();
-  
+
+  // Dashboard totals are converted into the user's default currency using the
+  // exchange rates configured in Settings.
+  const currencySettings = getCurrencySettings();
+  const defaultCurrency = currencySettings.defaultCurrency;
+  const rates = currencySettings.rates;
+  const ratesKey = JSON.stringify(rates);
+
+  // Total of an invoice converted into the default display currency.
+  const invoiceTotalInDefault = React.useCallback(
+    (invoice: { items: { quantity: number; price: number }[]; currency?: string }) => {
+      const raw = invoice.items.reduce(
+        (sum, item) => sum + item.quantity * item.price,
+        0
+      );
+      return convertCurrency(raw, invoice.currency || defaultCurrency, defaultCurrency, rates);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [defaultCurrency, ratesKey]
+  );
+
   // Calculate summary statistics
   const summaryStats = React.useMemo(() => {
     if (!invoices) return {
@@ -41,12 +61,10 @@ export const Dashboard: React.FC = () => {
     };
 
     invoices.forEach(invoice => {
-      const invoiceTotal = invoice.items.reduce(
-        (sum, item) => sum + item.quantity * item.price, 0
-      );
-      
+      const invoiceTotal = invoiceTotalInDefault(invoice);
+
       stats.totalAmount += invoiceTotal;
-      
+
       if (invoice.status === 'paid') {
         stats.paidAmount += invoiceTotal;
       } else if (invoice.status === 'overdue') {
@@ -58,44 +76,43 @@ export const Dashboard: React.FC = () => {
 
     return {
       ...stats,
-      averageInvoiceValue: stats.totalInvoices > 0 
-        ? stats.totalAmount / stats.totalInvoices 
+      averageInvoiceValue: stats.totalInvoices > 0
+        ? stats.totalAmount / stats.totalInvoices
         : 0
     };
-  }, [invoices]);
+  }, [invoices, invoiceTotalInDefault]);
 
   // Generate monthly data for the last 6 months
   const monthlyData = React.useMemo(() => {
     if (!invoices) return [];
-    
+
     const months = [];
     const now = new Date();
-    
+
     // Create data for the last 6 months
     for (let i = 5; i >= 0; i--) {
       const monthDate = subMonths(now, i);
       const monthStart = startOfMonth(monthDate);
       const monthEnd = endOfMonth(monthDate);
-      
+
       const monthInvoices = invoices.filter(invoice => {
         const invoiceDate = parseISO(invoice.date);
         return isWithinInterval(invoiceDate, { start: monthStart, end: monthEnd });
       });
-      
-      const totalAmount = monthInvoices.reduce((sum, invoice) => {
-        return sum + invoice.items.reduce(
-          (itemSum, item) => itemSum + item.quantity * item.price, 0
-        );
-      }, 0);
-      
+
+      const totalAmount = monthInvoices.reduce(
+        (sum, invoice) => sum + invoiceTotalInDefault(invoice),
+        0
+      );
+
       months.push({
         name: format(monthDate, 'MMM yyyy'),
         amount: totalAmount,
       });
     }
-    
+
     return months;
-  }, [invoices]);
+  }, [invoices, invoiceTotalInDefault]);
 
   // Generate status distribution data for pie chart
   const statusData = React.useMemo(() => {
@@ -138,8 +155,13 @@ export const Dashboard: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-semibold">Invoice Dashboard</h2>
-      
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 className="text-xl font-semibold">Invoice Dashboard</h2>
+        <span className="text-sm text-foreground-500">
+          Totals shown in {defaultCurrency} (converted using your exchange rates)
+        </span>
+      </div>
+
       {/* Summary Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="bg-content1">
@@ -161,7 +183,7 @@ export const Dashboard: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-foreground-500 text-sm">Total Amount</p>
-                <p className="text-2xl font-semibold">{formatCurrency(summaryStats.totalAmount)}</p>
+                <p className="text-2xl font-semibold">{formatCurrency(summaryStats.totalAmount, defaultCurrency)}</p>
               </div>
               <div className="p-2 bg-success-100 rounded-md">
                 <Icon icon="lucide:dollar-sign" className="text-success h-6 w-6" />
@@ -175,7 +197,7 @@ export const Dashboard: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-foreground-500 text-sm">Paid Amount</p>
-                <p className="text-2xl font-semibold">{formatCurrency(summaryStats.paidAmount)}</p>
+                <p className="text-2xl font-semibold">{formatCurrency(summaryStats.paidAmount, defaultCurrency)}</p>
               </div>
               <div className="p-2 bg-success-100 rounded-md">
                 <Icon icon="lucide:check-circle" className="text-success h-6 w-6" />
@@ -189,7 +211,7 @@ export const Dashboard: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-foreground-500 text-sm">Overdue Amount</p>
-                <p className="text-2xl font-semibold">{formatCurrency(summaryStats.overdueAmount)}</p>
+                <p className="text-2xl font-semibold">{formatCurrency(summaryStats.overdueAmount, defaultCurrency)}</p>
               </div>
               <div className="p-2 bg-danger-100 rounded-md">
                 <Icon icon="lucide:alert-circle" className="text-danger h-6 w-6" />
@@ -220,12 +242,12 @@ export const Dashboard: React.FC = () => {
                 >
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="name" />
-                  <YAxis 
-                    tickFormatter={(value) => `$${value}`} 
+                  <YAxis
+                    tickFormatter={(value) => `${getCurrencySymbol(defaultCurrency)}${value}`}
                     width={80}
                   />
-                  <Tooltip 
-                    formatter={(value) => [`${formatCurrency(value as number)}`, 'Amount']}
+                  <Tooltip
+                    formatter={(value) => [`${formatCurrency(value as number, defaultCurrency)}`, 'Amount']}
                     labelStyle={{ color: '#000' }}
                     contentStyle={{ 
                       backgroundColor: '#fff',
@@ -346,7 +368,7 @@ export const Dashboard: React.FC = () => {
                 <div className="flex justify-between items-center">
                   <div>
                     <p className="text-foreground-500 text-sm">Paid</p>
-                    <p className="text-xl font-semibold text-success">{formatCurrency(summaryStats.paidAmount)}</p>
+                    <p className="text-xl font-semibold text-success">{formatCurrency(summaryStats.paidAmount, defaultCurrency)}</p>
                   </div>
                   <div className="p-2 bg-success-100 rounded-md">
                     <Icon icon="lucide:check-circle" className="text-success h-5 w-5" />
@@ -358,7 +380,7 @@ export const Dashboard: React.FC = () => {
                 <div className="flex justify-between items-center">
                   <div>
                     <p className="text-foreground-500 text-sm">Pending</p>
-                    <p className="text-xl font-semibold text-primary">{formatCurrency(summaryStats.pendingAmount)}</p>
+                    <p className="text-xl font-semibold text-primary">{formatCurrency(summaryStats.pendingAmount, defaultCurrency)}</p>
                   </div>
                   <div className="p-2 bg-primary-100 rounded-md">
                     <Icon icon="lucide:clock" className="text-primary h-5 w-5" />
@@ -370,7 +392,7 @@ export const Dashboard: React.FC = () => {
                 <div className="flex justify-between items-center">
                   <div>
                     <p className="text-foreground-500 text-sm">Overdue</p>
-                    <p className="text-xl font-semibold text-danger">{formatCurrency(summaryStats.overdueAmount)}</p>
+                    <p className="text-xl font-semibold text-danger">{formatCurrency(summaryStats.overdueAmount, defaultCurrency)}</p>
                   </div>
                   <div className="p-2 bg-danger-100 rounded-md">
                     <Icon icon="lucide:alert-circle" className="text-danger h-5 w-5" />

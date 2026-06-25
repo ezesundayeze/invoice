@@ -22,7 +22,7 @@ import { Icon } from "@iconify/react";
 import { useInvoice } from "../context/invoice-context";
 import { InvoiceFormData, InvoiceItem } from "../types/invoice";
 import { InvoicePreview } from "./invoice-preview";
-import { CURRENCIES, DEFAULT_CURRENCY, formatCurrency, getCurrencySymbol } from "../utils/currency";
+import { CURRENCIES, formatCurrency, getCurrencySettings, getCurrencySymbol } from "../utils/currency";
 import { getBranding, getProfile, saveProfile } from "../utils/profile";
 
 const emptyItem = (): InvoiceItem => ({
@@ -46,7 +46,7 @@ const makeInitialFormState = (): InvoiceFormData => ({
     phone: "",
   },
   items: [emptyItem()],
-  currency: DEFAULT_CURRENCY,
+  currency: getCurrencySettings().defaultCurrency,
   branding: getBranding(),
   notes: "",
   terms: "Payment is due within 30 days",

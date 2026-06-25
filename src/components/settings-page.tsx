@@ -10,6 +10,12 @@ import {
   saveProfile,
 } from '../utils/profile';
 import { InvoiceBranding } from '../types/invoice';
+import {
+  CURRENCIES,
+  CurrencySettings,
+  getCurrencySettings,
+  saveCurrencySettings,
+} from '../utils/currency';
 // We might use Button from '@heroui/react' if available and suitable
 // import { Button } from '@heroui/react';
 
@@ -63,6 +69,30 @@ const SettingsPage: React.FC = () => {
     e.preventDefault();
     saveBranding(branding);
     alert('Branding saved. New invoices will use your logo and accent color.');
+  };
+
+  const [currencySettings, setCurrencySettings] = useState<CurrencySettings>(
+    () => getCurrencySettings()
+  );
+
+  const handleDefaultCurrencyChange = (
+    e: React.ChangeEvent<HTMLSelectElement>
+  ) => {
+    const value = e.target.value;
+    setCurrencySettings((prev) => ({ ...prev, defaultCurrency: value }));
+  };
+
+  const handleRateChange = (code: string, value: string) => {
+    setCurrencySettings((prev) => ({
+      ...prev,
+      rates: { ...prev.rates, [code]: parseFloat(value) || 0 },
+    }));
+  };
+
+  const handleSaveCurrencySettings = (e: React.FormEvent) => {
+    e.preventDefault();
+    saveCurrencySettings(currencySettings);
+    alert('Currency settings saved. Dashboard totals now use these rates and default currency.');
   };
 
   const handleBackup = async () => {
@@ -281,6 +311,65 @@ const SettingsPage: React.FC = () => {
               className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
             >
               Save Branding
+            </button>
+          </form>
+        </div>
+
+        <div className="mt-8 pt-6 border-t border-gray-200">
+          <h2 className="text-xl font-medium mb-2">Currency &amp; Exchange Rates</h2>
+          <p className="text-sm text-gray-600 mb-3">
+            Pick the default currency for new invoices and the dashboard. Dashboard
+            totals combine invoices in different currencies by converting them with
+            the rates below. Each rate is the value of <strong>1 unit</strong> of that
+            currency in USD (e.g. 1 EUR = 1.08 USD). Update them whenever rates change.
+          </p>
+          <form onSubmit={handleSaveCurrencySettings} className="space-y-4 max-w-lg">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Default Currency
+              </label>
+              <select
+                value={currencySettings.defaultCurrency}
+                onChange={handleDefaultCurrencyChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {CURRENCIES.map((currency) => (
+                  <option key={currency.code} value={currency.code}>
+                    {currency.code} - {currency.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Exchange Rates (value of 1 unit in USD)
+              </label>
+              <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
+                {CURRENCIES.map((currency) => (
+                  <div key={currency.code} className="flex items-center gap-3">
+                    <span className="w-40 text-sm text-gray-700">
+                      {currency.code} - {currency.name}
+                    </span>
+                    <span className="text-sm text-gray-500">1 {currency.code} =</span>
+                    <input
+                      type="number"
+                      step="0.0001"
+                      min="0"
+                      value={currencySettings.rates[currency.code] ?? ''}
+                      onChange={(e) => handleRateChange(currency.code, e.target.value)}
+                      disabled={currency.code === 'USD'}
+                      className="w-28 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-500"
+                    />
+                    <span className="text-sm text-gray-500">USD</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+            >
+              Save Currency Settings
             </button>
           </form>
         </div>
