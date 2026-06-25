@@ -16,9 +16,21 @@ const waitForImages = async (element: HTMLElement): Promise<void> => {
   );
 };
 
+// html2canvas can mis-size images set with `auto`/`max-*` and clip them. Pin
+// each image to its currently rendered pixel size so the capture is exact.
+const freezeImageSizes = (element: HTMLElement): void => {
+  element.querySelectorAll("img").forEach((img) => {
+    if (img.offsetWidth && img.offsetHeight) {
+      img.style.width = `${img.offsetWidth}px`;
+      img.style.height = `${img.offsetHeight}px`;
+    }
+  });
+};
+
 export const exportToPdf = async (element: HTMLElement, filename: string): Promise<void> => {
   try {
     await waitForImages(element);
+    freezeImageSizes(element);
 
     const canvas = await html2canvas(element, {
       scale: 2,

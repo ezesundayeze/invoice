@@ -35,6 +35,29 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoiceId }) => 
     fetchInvoice();
   }, [invoiceId, getInvoice]);
 
+  // Explicit logo dimensions (in px) computed from the image's natural aspect
+  // ratio. html2canvas does not honor `object-fit`/`auto` sizing reliably and
+  // can clip the logo, so we give the <img> concrete width/height instead.
+  const [logoSize, setLogoSize] = React.useState<{ w: number; h: number } | null>(null);
+
+  const handleLogoLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const img = e.currentTarget;
+    const maxH = 64;
+    const maxW = 200;
+    if (!img.naturalWidth || !img.naturalHeight) {
+      setLogoSize({ w: maxW, h: maxH });
+      return;
+    }
+    const ratio = img.naturalWidth / img.naturalHeight;
+    let h = maxH;
+    let w = h * ratio;
+    if (w > maxW) {
+      w = maxW;
+      h = w / ratio;
+    }
+    setLogoSize({ w: Math.round(w), h: Math.round(h) });
+  };
+
   const calculateSubtotal = () => {
     if (!invoice) return 0;
     return invoice.items.reduce(
@@ -84,14 +107,13 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoiceId }) => 
               <img
                 src={branding.logo}
                 alt="Business logo"
+                onLoad={handleLogoLoad}
                 className="mb-3 block"
-                style={{
-                  height: "auto",
-                  width: "auto",
-                  maxHeight: "64px",
-                  maxWidth: "200px",
-                  objectFit: "contain",
-                }}
+                style={
+                  logoSize
+                    ? { width: `${logoSize.w}px`, height: `${logoSize.h}px` }
+                    : { maxHeight: "64px", maxWidth: "200px" }
+                }
               />
             )}
             <h1 className="text-2xl font-bold" style={{ color: accent }}>INVOICE</h1>

@@ -19,6 +19,36 @@ import {
 // We might use Button from '@heroui/react' if available and suitable
 // import { Button } from '@heroui/react';
 
+// Draw an uploaded image (including SVG) onto a canvas and export it as a
+// downscaled PNG data URL. Rasterizing here keeps the stored logo small and
+// renders reliably in the exported PDF.
+const rasterizeToPng = (dataUrl: string): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const maxH = 200;
+      const maxW = 600;
+      let w = img.naturalWidth || 300;
+      let h = img.naturalHeight || 150;
+      const scale = Math.min(1, maxH / h, maxW / w);
+      w = Math.max(1, Math.round(w * scale));
+      h = Math.max(1, Math.round(h * scale));
+
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        reject(new Error('Canvas is not supported'));
+        return;
+      }
+      ctx.drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL('image/png'));
+    };
+    img.onerror = () => reject(new Error('Failed to load image'));
+    img.src = dataUrl;
+  });
+
 const SettingsPage: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null); // Ref for file input
   const logoInputRef = useRef<HTMLInputElement>(null); // Ref for logo file input
@@ -54,8 +84,17 @@ const SettingsPage: React.FC = () => {
     }
 
     const reader = new FileReader();
-    reader.onload = () => {
-      setBranding((prev) => ({ ...prev, logo: reader.result as string }));
+    reader.onload = async () => {
+      const dataUrl = reader.result as string;
+      try {
+        // Normalize to a downscaled PNG. This guarantees a defined size and
+        // avoids html2canvas's unreliable SVG handling when exporting the PDF.
+        const png = await rasterizeToPng(dataUrl);
+        setBranding((prev) => ({ ...prev, logo: png }));
+      } catch {
+        // If rasterization fails, fall back to the original upload.
+        setBranding((prev) => ({ ...prev, logo: dataUrl }));
+      }
     };
     reader.readAsDataURL(file);
   };
