@@ -3,7 +3,7 @@ import { format, parseISO, subMonths, isWithinInterval, startOfMonth, endOfMonth
 import { Card, CardBody, CardHeader, Spinner, Chip, Divider } from "@heroui/react";
 import { Icon } from "@iconify/react";
 import { useInvoice } from "../context/invoice-context";
-import { Invoice } from "../types/invoice";
+import { formatCurrency } from "../utils/currency";
 import { 
   BarChart, 
   Bar, 
@@ -126,22 +126,7 @@ export const Dashboard: React.FC = () => {
     return [...invoices].slice(0, 5);
   }, [invoices]);
 
-  const statusColorMap = {
-    draft: "#a1a1aa", // default
-    sent: "#338ef7",  // primary
-    paid: "#17c964",  // success
-    overdue: "#f31260" // danger
-  };
-
   const COLORS = ["#a1a1aa", "#338ef7", "#17c964", "#f31260"];
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2
-    }).format(value);
-  };
 
   if (isLoading) {
     return (
@@ -281,7 +266,7 @@ export const Dashboard: React.FC = () => {
                     label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                     animationDuration={1500}
                   >
-                    {statusData.map((entry, index) => (
+                    {statusData.map((_entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
@@ -325,7 +310,7 @@ export const Dashboard: React.FC = () => {
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="font-medium">{formatCurrency(total)}</p>
+                        <p className="font-medium">{formatCurrency(total, invoice.currency)}</p>
                         <Chip
                           className="capitalize mt-1"
                           color={invoice.status as "default" | "primary" | "success" | "danger"}

@@ -1,11 +1,26 @@
-import React, { useRef } from 'react'; // Added useRef
+import React, { useRef, useState } from 'react'; // Added useRef, useState
 import { db } from '../db/db'; // Import the Dexie db instance
 import { Invoice } from '../types/invoice'; // Import Invoice type for casting
+import { BusinessProfile, getProfile, saveProfile } from '../utils/profile';
 // We might use Button from '@heroui/react' if available and suitable
 // import { Button } from '@heroui/react';
 
 const SettingsPage: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null); // Ref for file input
+  const [profile, setProfile] = useState<BusinessProfile>(() => getProfile());
+
+  const handleProfileChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setProfile((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSaveProfile = (e: React.FormEvent) => {
+    e.preventDefault();
+    saveProfile(profile);
+    alert('Business profile saved. It will pre-fill the "Your Details" section on new invoices.');
+  };
 
   const handleBackup = async () => {
     try {
@@ -92,6 +107,62 @@ const SettingsPage: React.FC = () => {
       <h1 className="text-2xl font-semibold mb-6">Settings</h1>
       <div className="space-y-4">
         <div>
+          <h2 className="text-xl font-medium mb-2">Business Profile</h2>
+          <p className="text-sm text-gray-600 mb-3">
+            Your details below are used to pre-fill the "Your Details" section when you
+            create a new invoice. You can still edit them on any individual invoice.
+          </p>
+          <form onSubmit={handleSaveProfile} className="space-y-3 max-w-lg">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+              <input
+                type="text"
+                name="name"
+                value={profile.name}
+                onChange={handleProfileChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <input
+                type="email"
+                name="email"
+                value={profile.email}
+                onChange={handleProfileChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+              <textarea
+                name="address"
+                value={profile.address}
+                onChange={handleProfileChange}
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+              <input
+                type="text"
+                name="phone"
+                value={profile.phone}
+                onChange={handleProfileChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+            >
+              Save Profile
+            </button>
+          </form>
+        </div>
+
+        <div className="mt-8 pt-6 border-t border-gray-200">
           <h2 className="text-xl font-medium mb-2">Data Management</h2>
           <p className="text-sm text-gray-600 mb-3">
             Backup your invoice data to a local file or restore it from a previously saved backup.

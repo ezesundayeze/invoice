@@ -3,7 +3,6 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { v4 as uuidv4 } from 'uuid';
 import { db } from '../db/db';
 import { Invoice, InvoiceFormData } from '../types/invoice';
-import { format } from 'date-fns';
 
 interface InvoiceContextType {
   invoices: Invoice[] | undefined;
@@ -13,6 +12,10 @@ interface InvoiceContextType {
   deleteInvoice: (id: string) => Promise<void>;
   getInvoice: (id: string) => Promise<Invoice | undefined>;
   updateInvoiceStatus: (id: string, status: Invoice['status']) => Promise<void>;
+  activeTab: string;
+  setActiveTab: (key: string) => void;
+  prefillData: InvoiceFormData | null;
+  setPrefillData: (data: InvoiceFormData | null) => void;
 }
 
 export const InvoiceContext = React.createContext<InvoiceContextType>({
@@ -23,11 +26,17 @@ export const InvoiceContext = React.createContext<InvoiceContextType>({
   deleteInvoice: async () => {},
   getInvoice: async () => undefined,
   updateInvoiceStatus: async () => {},
+  activeTab: 'dashboard',
+  setActiveTab: () => {},
+  prefillData: null,
+  setPrefillData: () => {},
 });
 
 export const InvoiceProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const invoices = useLiveQuery(() => db.invoices.orderBy('createdAt').reverse().toArray());
   const isLoading = invoices === undefined;
+  const [activeTab, setActiveTab] = React.useState('dashboard');
+  const [prefillData, setPrefillData] = React.useState<InvoiceFormData | null>(null);
 
   const createInvoice = async (data: InvoiceFormData): Promise<string> => {
     const now = new Date().toISOString();
@@ -77,6 +86,10 @@ export const InvoiceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         deleteInvoice,
         getInvoice,
         updateInvoiceStatus,
+        activeTab,
+        setActiveTab,
+        prefillData,
+        setPrefillData,
       }}
     >
       {children}

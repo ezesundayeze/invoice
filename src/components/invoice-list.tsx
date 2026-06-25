@@ -24,9 +24,11 @@ import {
 } from "@heroui/react";
 import { Icon } from "@iconify/react";
 import { format, parseISO } from "date-fns";
+import { v4 as uuidv4 } from "uuid";
 import { useInvoice } from "../context/invoice-context";
-import { Invoice } from "../types/invoice";
+import { Invoice, InvoiceFormData } from "../types/invoice";
 import { InvoicePreview } from "./invoice-preview";
+import { DEFAULT_CURRENCY, formatCurrency } from "../utils/currency";
 
 const statusColorMap = {
   draft: "default",
@@ -36,7 +38,7 @@ const statusColorMap = {
 } as const;
 
 export const InvoiceList: React.FC = () => {
-  const { invoices, isLoading, deleteInvoice, updateInvoiceStatus } = useInvoice();
+  const { invoices, isLoading, deleteInvoice, updateInvoiceStatus, setPrefillData, setActiveTab } = useInvoice();
   const [selectedInvoice, setSelectedInvoice] = React.useState<string | null>(null);
   const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
   const [page, setPage] = React.useState(1);
@@ -63,6 +65,38 @@ export const InvoiceList: React.FC = () => {
         color: "danger",
       });
     }
+  };
+
+  const handleDuplicateInvoice = (invoice: Invoice) => {
+    const formData: InvoiceFormData = {
+      invoiceNumber: `INV-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`,
+      date: format(new Date(), 'yyyy-MM-dd'),
+      dueDate: format(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'),
+      from: {
+        name: invoice.from.name,
+        email: invoice.from.email,
+        address: invoice.from.address,
+        phone: invoice.from.phone ?? "",
+      },
+      to: {
+        name: invoice.to.name,
+        email: invoice.to.email,
+        address: invoice.to.address,
+        phone: invoice.to.phone ?? "",
+      },
+      items: invoice.items.map((item) => ({ ...item, id: uuidv4() })),
+      currency: invoice.currency ?? DEFAULT_CURRENCY,
+      notes: invoice.notes ?? "",
+      terms: invoice.terms ?? "",
+    };
+
+    setPrefillData(formData);
+    setActiveTab('create');
+    addToast({
+      title: "Invoice Duplicated",
+      description: "Edit the copy and save it as a new invoice.",
+      color: "success",
+    });
   };
 
   const handleStatusChange = async (id: string, status: Invoice['status']) => {
@@ -149,7 +183,7 @@ export const InvoiceList: React.FC = () => {
                 <TableCell>{invoice.invoiceNumber}</TableCell>
                 <TableCell>{format(parseISO(invoice.date), 'MMM dd, yyyy')}</TableCell>
                 <TableCell>{invoice.to.name}</TableCell>
-                <TableCell>${total.toFixed(2)}</TableCell>
+                <TableCell>{formatCurrency(total, invoice.currency)}</TableCell>
                 <TableCell>
                   <Chip
                     className="capitalize"
@@ -182,7 +216,15 @@ export const InvoiceList: React.FC = () => {
                         </Button>
                       </DropdownTrigger>
                       <DropdownMenu aria-label="Invoice actions">
-                        <DropdownItem textValue="Change Status" className="text-foreground">
+                        <DropdownItem
+                          key="duplicate"
+                          textValue="Duplicate Invoice"
+                          onPress={() => handleDuplicateInvoice(invoice)}
+                          startContent={<Icon icon="lucide:copy" />}
+                        >
+                          Duplicate Invoice
+                        </DropdownItem>
+                        <DropdownItem key="change-status-label" textValue="Change Status" className="text-foreground">
                           <div className="font-medium">Change Status</div>
                         </DropdownItem>
                         <DropdownItem 

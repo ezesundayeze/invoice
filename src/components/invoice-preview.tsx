@@ -1,21 +1,15 @@
 import React from "react";
 import { format, parseISO } from "date-fns";
-import { Button, Spinner, Divider, Chip } from "@heroui/react";
+import { Button, Spinner, Divider } from "@heroui/react";
 import { Icon } from "@iconify/react";
 import { useInvoice } from "../context/invoice-context";
 import { Invoice } from "../types/invoice";
 import { exportToPdf } from "../utils/export-utils";
+import { formatCurrency } from "../utils/currency";
 
 interface InvoicePreviewProps {
   invoiceId: string;
 }
-
-const statusColorMap = {
-  draft: "default",
-  sent: "primary",
-  paid: "success",
-  overdue: "danger",
-} as const;
 
 export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoiceId }) => {
   const { getInvoice } = useInvoice();
@@ -83,16 +77,6 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoiceId }) => 
         <div className="flex justify-between items-start mb-8">
           <div>
             <h1 className="text-2xl font-bold text-gray-800">INVOICE</h1>
-            <div className="mt-1">
-              <Chip
-                className="capitalize"
-                color={statusColorMap[invoice.status]}
-                size="sm"
-                variant="flat"
-              >
-                {invoice.status}
-              </Chip>
-            </div>
           </div>
           <div className="text-right">
             <p className="text-xl font-semibold text-gray-800">{invoice.invoiceNumber}</p>
@@ -140,9 +124,9 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoiceId }) => 
                 <tr key={item.id} className="border-b border-gray-100">
                   <td className="py-4 px-2">{item.description}</td>
                   <td className="py-4 px-2 text-right">{item.quantity}</td>
-                  <td className="py-4 px-2 text-right">${item.price.toFixed(2)}</td>
+                  <td className="py-4 px-2 text-right">{formatCurrency(item.price, invoice.currency)}</td>
                   <td className="py-4 px-2 text-right">
-                    ${(item.quantity * item.price).toFixed(2)}
+                    {formatCurrency(item.quantity * item.price, invoice.currency)}
                   </td>
                 </tr>
               ))}
@@ -154,12 +138,12 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoiceId }) => 
           <div className="w-64">
             <div className="flex justify-between py-2">
               <span className="text-gray-600">Subtotal</span>
-              <span className="font-medium">${calculateSubtotal().toFixed(2)}</span>
+              <span className="font-medium">{formatCurrency(calculateSubtotal(), invoice.currency)}</span>
             </div>
             <Divider className="my-2" />
             <div className="flex justify-between py-2">
               <span className="font-semibold">Total</span>
-              <span className="font-bold">${calculateSubtotal().toFixed(2)}</span>
+              <span className="font-bold">{formatCurrency(calculateSubtotal(), invoice.currency)}</span>
             </div>
           </div>
         </div>

@@ -1,18 +1,20 @@
 import React from "react";
 import { v4 as uuidv4 } from "uuid";
 import { format } from "date-fns";
-import { 
-  Button, 
-  Input, 
-  Textarea, 
-  Card, 
-  CardBody, 
+import {
+  Button,
+  Input,
+  Textarea,
+  Card,
+  CardBody,
   Divider,
   Modal,
   ModalContent,
   ModalHeader,
   ModalBody,
   ModalFooter,
+  Select,
+  SelectItem,
   useDisclosure,
   addToast
 } from "@heroui/react";
@@ -20,6 +22,8 @@ import { Icon } from "@iconify/react";
 import { useInvoice } from "../context/invoice-context";
 import { InvoiceFormData, InvoiceItem } from "../types/invoice";
 import { InvoicePreview } from "./invoice-preview";
+import { CURRENCIES, DEFAULT_CURRENCY, formatCurrency, getCurrencySymbol } from "../utils/currency";
+import { getProfile, saveProfile } from "../utils/profile";
 
 const emptyItem = (): InvoiceItem => ({
   id: uuidv4(),
@@ -28,16 +32,13 @@ const emptyItem = (): InvoiceItem => ({
   price: 0,
 });
 
-const initialFormState: InvoiceFormData = {
+// Builds a fresh blank form, pre-filling "Your Details" from the saved
+// business profile so the user doesn't re-enter it on every invoice.
+const makeInitialFormState = (): InvoiceFormData => ({
   invoiceNumber: `INV-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`,
   date: format(new Date(), 'yyyy-MM-dd'),
-  // dueDate is now optional
-  from: {
-    name: "",
-    email: "",
-    address: "",
-    phone: "",
-  },
+  // dueDate is optional, so it is left unset by default
+  from: getProfile(),
   to: {
     name: "",
     // email is now optional
@@ -45,19 +46,29 @@ const initialFormState: InvoiceFormData = {
     phone: "",
   },
   items: [emptyItem()],
+  currency: DEFAULT_CURRENCY,
   notes: "",
   terms: "Payment is due within 30 days",
-};
+});
 
 export const CreateInvoice: React.FC = () => {
-  const { createInvoice } = useInvoice();
-  const [formData, setFormData] = React.useState<InvoiceFormData>(initialFormState);
+  const { createInvoice, prefillData, setPrefillData } = useInvoice();
+  const [formData, setFormData] = React.useState<InvoiceFormData>(makeInitialFormState);
   const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
   const [createdInvoiceId, setCreatedInvoiceId] = React.useState<string | null>(null);
 
+  // Load data handed off from a "Duplicate" action, then clear it so it
+  // doesn't re-apply on subsequent visits to this tab.
+  React.useEffect(() => {
+    if (prefillData) {
+      setFormData(prefillData);
+      setPrefillData(null);
+    }
+  }, [prefillData, setPrefillData]);
+
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-    section?: keyof InvoiceFormData
+    section?: "from" | "to"
   ) => {
     const { name, value } = e.target;
     
@@ -118,20 +129,18 @@ export const CreateInvoice: React.FC = () => {
       const id = await createInvoice(formData);
       setCreatedInvoiceId(id);
       onOpen();
-      
+
+      // Remember "Your Details" so the next invoice is pre-filled.
+      saveProfile(formData.from);
+
       addToast({
         title: "Invoice Created",
         description: `Invoice ${formData.invoiceNumber} has been created successfully.`,
         color: "success",
       });
-      
+
       // Reset form after successful creation
-      setFormData({
-        ...initialFormState,
-        invoiceNumber: `INV-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`,
-        date: format(new Date(), 'yyyy-MM-dd'),
-        // No need to set dueDate here as it's optional and defaults to undefined in initialFormState
-      });
+      setFormData(makeInitialFormState());
     } catch (error) {
       console.error("Error creating invoice:", error);
       addToast({
@@ -178,6 +187,23 @@ export const CreateInvoice: React.FC = () => {
                   value={formData.dueDate || ""}
                   onChange={handleInputChange}
                 />
+                <Select
+                  label="Currency"
+                  selectedKeys={[formData.currency]}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      currency: e.target.value || prev.currency,
+                    }))
+                  }
+                  isRequired
+                >
+                  {CURRENCIES.map((currency) => (
+                    <SelectItem key={currency.code} textValue={`${currency.code} - ${currency.name}`}>
+                      {currency.code} - {currency.name}
+                    </SelectItem>
+                  ))}
+                </Select>
               </div>
             </CardBody>
           </Card>
@@ -326,7 +352,11 @@ export const CreateInvoice: React.FC = () => {
                       type="number"
                       min="0"
                       step="0.01"
-                      startContent={<div className="pointer-events-none">$</div>}
+                      startContent={
+                        <div className="pointer-events-none">
+                          {getCurrencySymbol(formData.currency)}
+                        </div>
+                      }
                       value={item.price.toString()}
                       onChange={(e) => 
                         handleItemChange(item.id, "price", parseFloat(e.target.value) || 0)
@@ -336,7 +366,7 @@ export const CreateInvoice: React.FC = () => {
                   </div>
                   <div className="col-span-2 md:col-span-1 flex items-center justify-end">
                     <p className="text-foreground-600 text-sm">
-                      ${(item.quantity * item.price).toFixed(2)}
+                      {formatCurrency(item.quantity * item.price, formData.currency)}
                     </p>
                   </div>
                   <div className="col-span-12 md:col-span-1 flex justify-end">
@@ -365,11 +395,11 @@ export const CreateInvoice: React.FC = () => {
               <div className="w-full max-w-xs space-y-2">
                 <div className="flex justify-between">
                   <span className="text-foreground-600">Subtotal:</span>
-                  <span className="font-medium">${calculateSubtotal().toFixed(2)}</span>
+                  <span className="font-medium">{formatCurrency(calculateSubtotal(), formData.currency)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-foreground-600">Total:</span>
-                  <span className="font-semibold text-lg">${calculateSubtotal().toFixed(2)}</span>
+                  <span className="font-semibold text-lg">{formatCurrency(calculateSubtotal(), formData.currency)}</span>
                 </div>
               </div>
             </div>
@@ -380,7 +410,7 @@ export const CreateInvoice: React.FC = () => {
           <Button
             color="danger"
             variant="flat"
-            onPress={() => setFormData(initialFormState)}
+            onPress={() => setFormData(makeInitialFormState())}
           >
             Reset
           </Button>

@@ -23,6 +23,7 @@ export interface Invoice {
     phone?: string;
   };
   items: InvoiceItem[];
+  currency: string;
   notes?: string;
   terms?: string;
   status: 'draft' | 'sent' | 'paid' | 'overdue';
@@ -47,6 +48,7 @@ export interface InvoiceFormData {
     phone: string;
   };
   items: InvoiceItem[];
+  currency: string;
   notes: string;
   terms: string;
 }
