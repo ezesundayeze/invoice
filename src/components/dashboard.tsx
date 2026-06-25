@@ -3,7 +3,7 @@ import { format, parseISO, subMonths, isWithinInterval, startOfMonth, endOfMonth
 import { Card, CardBody, CardHeader, Spinner, Chip, Divider } from "@heroui/react";
 import { Icon } from "@iconify/react";
 import { useInvoice } from "../context/invoice-context";
-import { convertCurrency, formatCurrency, getCurrencySettings, getCurrencySymbol } from "../utils/currency";
+import { DEFAULT_CURRENCY, convertCurrency, formatCurrency, getCurrencySettings, getCurrencySymbol } from "../utils/currency";
 import { 
   BarChart, 
   Bar, 
@@ -35,7 +35,9 @@ export const Dashboard: React.FC = () => {
         (sum, item) => sum + item.quantity * item.price,
         0
       );
-      return convertCurrency(raw, invoice.currency || defaultCurrency, defaultCurrency, rates);
+      // Invoices created before the currency feature have no `currency` and
+      // were always in USD, so fall back to USD (not the default currency).
+      return convertCurrency(raw, invoice.currency || DEFAULT_CURRENCY, defaultCurrency, rates);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [defaultCurrency, ratesKey]
