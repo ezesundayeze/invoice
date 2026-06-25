@@ -193,14 +193,14 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoiceId }) => 
             {invoice.notes && (
               <div>
                 <h2 className="text-gray-500 font-medium mb-1 text-sm">NOTES</h2>
-                <p className="text-gray-600">{invoice.notes}</p>
+                <p className="text-gray-600 whitespace-pre-line">{invoice.notes}</p>
               </div>
             )}
             
             {invoice.terms && (
               <div>
                 <h2 className="text-gray-500 font-medium mb-1 text-sm">TERMS & CONDITIONS</h2>
-                <p className="text-gray-600">{invoice.terms}</p>
+                <p className="text-gray-600 whitespace-pre-line">{invoice.terms}</p>
               </div>
             )}
           </div>
